@@ -1,0 +1,723 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Analog Clock</title>
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='45' fill='%231a1a2e' stroke='%23ff6b35' stroke-width='4'/%3E%3Ccircle cx='50' cy='50' r='3' fill='%23ff6b35'/%3E%3Cline x1='50' y1='50' x2='50' y2='25' stroke='%23ff6b35' stroke-width='4' stroke-linecap='round'/%3E%3Cline x1='50' y1='50' x2='65' y2='50' stroke='%23ff6b35' stroke-width='3' stroke-linecap='round'/%3E%3Cline x1='50' y1='50' x2='50' y2='15' stroke='%23ff6b35' stroke-width='1.5' stroke-linecap='round' opacity='0.7'/%3E%3C/svg%3E">
+<style>
+  /* ── Reset & Base ── */
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { width: 100%; height: 100%; overflow: hidden; }
+  body {
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    display: flex; align-items: center; justify-content: center;
+    transition: background 0.5s ease, color 0.3s ease;
+  }
+
+  /* ── Theme CSS Variables ── */
+  body[data-theme="dark"] {
+    --bg: #0f0f1a;
+    --surface: #1a1a2e;
+    --surface2: #252540;
+    --text: #e8e8f0;
+    --text-dim: #8888aa;
+    --accent: #ff6b35;
+    --accent2: #ff9a5c;
+    --clock-bg: #1a1a2e;
+    --clock-border: #ff6b35;
+    --clock-shadow: rgba(255, 107, 53, 0.15);
+    --hour-hand: #ff6b35;
+    --min-hand: #ff8c55;
+    --sec-hand: #ff6b35;
+    --center-dot: #ff6b35;
+    --tick-color: #444466;
+    --tick-hour: #8888aa;
+    --numeral-color: #e8e8f0;
+    --glow-color: rgba(255, 107, 53, 0.3);
+    --btn-bg: #252540;
+    --btn-active: #ff6b35;
+    --btn-text: #e8e8f0;
+    --btn-hover: #30305a;
+    --digital-color: #ff6b35;
+    --date-color: #8888aa;
+  }
+  body[data-theme="classic"] {
+    --bg: #f5f0e8;
+    --surface: #ffffff;
+    --surface2: #ede8dd;
+    --text: #2c2c2c;
+    --text-dim: #888888;
+    --accent: #8b4513;
+    --accent2: #a0522d;
+    --clock-bg: #faf8f5;
+    --clock-border: #c0b8a8;
+    --clock-shadow: rgba(0,0,0,0.08);
+    --hour-hand: #2c2c2c;
+    --min-hand: #4a4a4a;
+    --sec-hand: #8b4513;
+    --center-dot: #2c2c2c;
+    --tick-color: #ccc;
+    --tick-hour: #888;
+    --numeral-color: #2c2c2c;
+    --glow-color: transparent;
+    --btn-bg: #e8e3d8;
+    --btn-active: #8b4513;
+    --btn-text: #2c2c2c;
+    --btn-hover: #ddd8cb;
+    --digital-color: #2c2c2c;
+    --date-color: #666;
+  }
+  body[data-theme="neon"] {
+    --bg: #05050f;
+    --surface: #0a0a1a;
+    --surface2: #151530;
+    --text: #e0e0ff;
+    --text-dim: #6666aa;
+    --accent: #00fff5;
+    --accent2: #ff00ff;
+    --clock-bg: #0a0a1a;
+    --clock-border: #00fff5;
+    --clock-shadow: rgba(0, 255, 245, 0.08);
+    --hour-hand: #00fff5;
+    --min-hand: #ff00ff;
+    --sec-hand: #ffffff;
+    --center-dot: #00fff5;
+    --tick-color: #222244;
+    --tick-hour: #4444aa;
+    --numeral-color: #00fff5;
+    --glow-color: rgba(0, 255, 245, 0.25);
+    --btn-bg: #151530;
+    --btn-active: #00fff5;
+    --btn-text: #e0e0ff;
+    --btn-hover: #202050;
+    --digital-color: #00fff5;
+    --date-color: #6666aa;
+  }
+
+  /* ── Layout ── */
+  .container {
+    display: flex; flex-direction: column; align-items: center;
+    gap: 12px; padding: 20px;
+    width: 100%; max-width: 520px;
+    height: 100vh; height: 100dvh;
+    justify-content: center;
+  }
+
+  /* ── Clock ── */
+  .clock-wrapper {
+    position: relative;
+    width: min(70vw, 70vh, 380px);
+    aspect-ratio: 1 / 1;
+    flex-shrink: 0;
+  }
+  .clock-wrapper canvas {
+    display: block;
+    width: 100%; height: 100%;
+    border-radius: 50%;
+    box-shadow: 0 0 40px var(--clock-shadow), 0 0 80px var(--clock-shadow);
+  }
+
+  /* ── Info ── */
+  .info {
+    text-align: center;
+    line-height: 1.4;
+    min-height: 60px;
+  }
+  .digital-time {
+    font-size: clamp(1.6rem, 5vw, 2.6rem);
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: 0.08em;
+    color: var(--digital-color);
+    transition: color 0.4s ease;
+    text-shadow: 0 0 20px var(--glow-color);
+  }
+  .date-display {
+    font-size: clamp(0.8rem, 2.5vw, 1rem);
+    color: var(--date-color);
+    margin-top: 2px;
+    letter-spacing: 0.03em;
+    transition: color 0.4s ease;
+  }
+  body[data-theme="classic"] .digital-time {
+    font-family: Georgia, 'Times New Roman', serif;
+    color: var(--digital-color);
+    text-shadow: none;
+  }
+  body[data-theme="classic"] .date-display {
+    font-family: Georgia, 'Times New Roman', serif;
+  }
+  body[data-theme="neon"] .digital-time {
+    text-shadow: 0 0 20px rgba(0,255,245,0.4), 0 0 40px rgba(0,255,245,0.2);
+  }
+
+  /* ── Controls ── */
+  .controls {
+    display: flex; flex-wrap: wrap;
+    align-items: center; justify-content: center;
+    gap: 8px;
+    padding: 12px 16px;
+    border-radius: 16px;
+    background: var(--surface);
+    border: 1px solid var(--surface2);
+    transition: background 0.4s ease, border-color 0.4s ease;
+    max-width: 100%;
+  }
+  .control-group {
+    display: flex; align-items: center;
+    gap: 6px;
+  }
+  .control-group + .control-group::before {
+    content: '';
+    display: inline-block;
+    width: 1px; height: 24px;
+    background: var(--surface2);
+    margin: 0 6px;
+  }
+  .control-label {
+    font-size: 0.7rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--text-dim);
+    margin-right: 2px;
+  }
+  .btn-group {
+    display: flex;
+    border-radius: 8px;
+    overflow: hidden;
+    border: 1px solid var(--surface2);
+  }
+  .btn-group button {
+    border: none;
+    background: var(--btn-bg);
+    color: var(--text);
+    padding: 5px 12px;
+    font-size: 0.75rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 0.2s, color 0.2s;
+    font-family: inherit;
+    letter-spacing: 0.02em;
+  }
+  .btn-group button + button {
+    border-left: 1px solid var(--surface2);
+  }
+  .btn-group button:hover {
+    background: var(--btn-hover);
+  }
+  .btn-group button.active {
+    background: var(--btn-active);
+    color: #fff;
+    box-shadow: 0 0 12px var(--glow-color);
+  }
+  .toggle-btn {
+    border: 1px solid var(--surface2);
+    background: var(--btn-bg);
+    color: var(--text);
+    padding: 5px 12px;
+    font-size: 0.75rem;
+    font-weight: 500;
+    cursor: pointer;
+    border-radius: 8px;
+    transition: background 0.2s, color 0.2s, border-color 0.2s;
+    font-family: inherit;
+    white-space: nowrap;
+  }
+  .toggle-btn:hover {
+    background: var(--btn-hover);
+  }
+  .toggle-btn.active {
+    background: var(--btn-active);
+    color: #fff;
+    border-color: var(--btn-active);
+  }
+  #fullscreenBtn {
+    font-size: 0.75rem;
+  }
+
+  /* ── Responsive ── */
+  @media (max-width: 420px) {
+    .container { gap: 8px; padding: 10px; }
+    .controls { gap: 4px; padding: 8px 10px; border-radius: 12px; }
+    .control-group + .control-group::before { margin: 0 3px; }
+    .btn-group button { padding: 4px 8px; font-size: 0.65rem; }
+    .toggle-btn { padding: 4px 8px; font-size: 0.65rem; }
+  }
+  @media (max-height: 500px) {
+    .clock-wrapper { width: min(50vw, 50vh, 200px); }
+    .container { gap: 4px; }
+    .controls { padding: 6px 10px; }
+    .digital-time { font-size: clamp(1rem, 3vw, 1.4rem); }
+  }
+</style>
+</head>
+<body data-theme="dark" data-numerals="standard">
+
+<div class="container">
+
+  <!-- Clock -->
+  <div class="clock-wrapper">
+    <canvas id="clockCanvas"></canvas>
+  </div>
+
+  <!-- Info -->
+  <div class="info">
+    <div class="digital-time" id="digitalTime">00:00:00</div>
+    <div class="date-display" id="dateDisplay">Loading…</div>
+  </div>
+
+  <!-- Controls -->
+  <div class="controls">
+
+    <!-- Theme -->
+    <div class="control-group">
+      <span class="control-label">Theme</span>
+      <div class="btn-group" id="themeBtns">
+        <button data-theme="dark" class="active">Dark</button>
+        <button data-theme="classic">Classic</button>
+        <button data-theme="neon">Neon</button>
+      </div>
+    </div>
+
+    <!-- Numerals -->
+    <div class="control-group">
+      <span class="control-label">Numerals</span>
+      <div class="btn-group" id="numeralBtns">
+        <button data-numerals="standard" class="active">1–12</button>
+        <button data-numerals="roman">I–XII</button>
+        <button data-numerals="odia">୧–୧୨</button>
+      </div>
+    </div>
+
+    <!-- Date Language -->
+    <div class="control-group">
+      <span class="control-label">Date</span>
+      <button class="toggle-btn" id="dateLangBtn">English</button>
+    </div>
+
+    <!-- Fullscreen -->
+    <div class="control-group">
+      <button class="toggle-btn" id="fullscreenBtn">⛶ Fullscreen</button>
+    </div>
+
+  </div>
+</div>
+
+<script>
+(function(){
+  'use strict';
+
+  /* ── DOM refs ── */
+  const canvas  = document.getElementById('clockCanvas');
+  const ctx     = canvas.getContext('2d');
+  const body    = document.body;
+  const digital = document.getElementById('digitalTime');
+  const dateEl  = document.getElementById('dateDisplay');
+  const dateLangBtn = document.getElementById('dateLangBtn');
+
+  /* ── State ── */
+  const state = {
+    theme:    'dark',
+    numerals: 'standard',
+    dateLang: 'english',   // 'english' | 'odia'
+    fullscreen: false,
+    size: 0,               // canvas logical size
+  };
+
+  /* ── Numerals ── */
+  const STANDARD = ['12','1','2','3','4','5','6','7','8','9','10','11'];
+  const ROMAN    = ['XII','I','II','III','IV','V','VI','VII','VIII','IX','X','XI'];
+  const ODIA     = ['୧୨','୧','୨','୩','୪','୫','୬','୭','୮','୯','୧୦','୧୧'];
+
+  function getNumerals() {
+    switch (state.numerals) {
+      case 'roman':    return ROMAN;
+      case 'odia':     return ODIA;
+      default:         return STANDARD;
+    }
+  }
+
+  /* ── Odia date data ── */
+  const ODIA_MONTHS = [
+    'ଜାନୁଆରୀ','ଫେବୃଆରୀ','ମାର୍ଚ୍ଚ','ଅପ୍ରେଲ','ମଇ','ଜୁନ',
+    'ଜୁଲାଇ','ଅଗଷ୍ଟ','ସେପ୍ଟେମ୍ବର','ଅକ୍ଟୋବର','ନଭେମ୍ବର','ଡିସେମ୍ବର'
+  ];
+  const ODIA_DAYS = [
+    'ରବିବାର','ସୋମବାର','ମଙ୍ଗଳବାର','ବୁଧବାର','ଗୁରୁବାର','ଶୁକ୍ରବାର','ଶନିବାର'
+  ];
+  const EN_MONTHS = [
+    'January','February','March','April','May','June',
+    'July','August','September','October','November','December'
+  ];
+  const EN_DAYS = [
+    'Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'
+  ];
+
+  function toOdiaNum(n) {
+    const digits = String(n);
+    const map = ['୦','୧','୨','୩','୪','୫','୬','୭','୮','୯'];
+    return digits.split('').map(d => map[+d]).join('');
+  }
+
+  function formatDate(now) {
+    const dow = now.getDay();
+    const d   = now.getDate();
+    const m   = now.getMonth();
+    const y   = now.getFullYear();
+    if (state.dateLang === 'odia') {
+      return `${ODIA_DAYS[dow]}, ${toOdiaNum(d)} ${ODIA_MONTHS[m]} ${toOdiaNum(y)}`;
+    }
+    return `${EN_DAYS[dow]}, ${d} ${EN_MONTHS[m]} ${y}`;
+  }
+
+  /* ── Time helpers ── */
+  function getTimeAngles() {
+    const now = new Date();
+    const ms = now.getMilliseconds();
+    const s  = now.getSeconds();
+    const m  = now.getMinutes();
+    const h  = now.getHours() % 12;
+
+    const secAngle  = (s + ms / 1000) * 6;               // 0-360
+    const minAngle  = (m + s / 60 + ms / 60000) * 6;     // 0-360
+    const hourAngle = (h + m / 60 + s / 3600 + ms / 3600000) * 30; // 0-360
+    return { hourAngle, minAngle, secAngle, now };
+  }
+
+  /* ── Canvas sizing ── */
+  function resizeCanvas() {
+    const rect = canvas.parentElement.getBoundingClientRect();
+    const size = Math.floor(rect.width * devicePixelRatio);
+    if (size === state.size && canvas.width === size) return;
+    state.size = size;
+    const cs = getComputedStyle(canvas.parentElement);
+    const w = parseFloat(cs.width);
+    const logical = Math.floor(w);
+    canvas.width  = logical * devicePixelRatio;
+    canvas.height = logical * devicePixelRatio;
+    canvas.style.width  = logical + 'px';
+    canvas.style.height = logical + 'px';
+    state.logicalSize = logical;
+  }
+
+  /* ── Drawing ── */
+  function drawClock() {
+    resizeCanvas();
+    const dpr = devicePixelRatio || 1;
+    const S   = state.logicalSize || 300;  // logical px
+    const cx  = S / 2;
+    const cy  = S / 2;
+    const R   = S / 2 - 6;  // radius, small padding
+
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    ctx.clearRect(0, 0, S, S);
+
+    const isClassic = body.getAttribute('data-theme') === 'classic';
+    const isNeon    = body.getAttribute('data-theme') === 'neon';
+    const theme     = body.getAttribute('data-theme');
+
+    // Helper: get CSS var value
+    function css(v) {
+      return getComputedStyle(body).getPropertyValue(v).trim();
+    }
+
+    // ─── Clock face ───
+    ctx.save();
+
+    // Outer glow / shadow
+    if (theme === 'dark' || theme === 'neon') {
+      const glow = css('--glow-color');
+      ctx.shadowColor = glow;
+      ctx.shadowBlur  = R * 0.15;
+    }
+
+    // Face circle
+    ctx.beginPath();
+    ctx.arc(cx, cy, R, 0, Math.PI * 2);
+    ctx.fillStyle = css('--clock-bg');
+    ctx.fill();
+
+    // Border
+    ctx.shadowColor = 'transparent';
+    ctx.shadowBlur  = 0;
+    ctx.strokeStyle = css('--clock-border');
+    ctx.lineWidth   = Math.max(2, R * 0.018);
+    ctx.stroke();
+
+    // Inner subtle ring
+    ctx.beginPath();
+    ctx.arc(cx, cy, R * 0.95, 0, Math.PI * 2);
+    ctx.strokeStyle = css('--tick-color');
+    ctx.lineWidth   = 0.5;
+    ctx.globalAlpha = 0.3;
+    ctx.stroke();
+    ctx.globalAlpha = 1;
+
+    ctx.restore();
+
+    // ─── Ticks ───
+    const tickOuterR = R * 0.91;
+    const tickInnerR = R * 0.86;
+    const hourTickOuterR = R * 0.91;
+    const hourTickInnerR = R * 0.82;
+
+    for (let i = 0; i < 60; i++) {
+      const angle = (i / 60) * Math.PI * 2 - Math.PI / 2;
+      const isHour = i % 5 === 0;
+      const outerR = isHour ? hourTickOuterR : tickOuterR;
+      const innerR = isHour ? hourTickInnerR : tickInnerR;
+
+      const x1 = cx + Math.cos(angle) * innerR;
+      const y1 = cy + Math.sin(angle) * innerR;
+      const x2 = cx + Math.cos(angle) * outerR;
+      const y2 = cy + Math.sin(angle) * outerR;
+
+      ctx.beginPath();
+      ctx.moveTo(x1, y1);
+      ctx.lineTo(x2, y2);
+      ctx.strokeStyle = isHour ? css('--tick-hour') : css('--tick-color');
+      ctx.lineWidth = isHour ? Math.max(2, R * 0.022) : Math.max(1, R * 0.01);
+      ctx.lineCap = 'round';
+      ctx.stroke();
+    }
+
+    // ─── Numerals ───
+    const numerals = getNumerals();
+    const numR     = R * 0.74;
+    const fontSize = Math.max(12, R * 0.13);
+    ctx.textAlign  = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillStyle  = css('--numeral-color');
+    if (isClassic) {
+      ctx.font = `600 ${fontSize}px Georgia, 'Times New Roman', serif`;
+    } else {
+      ctx.font = `600 ${fontSize}px 'Segoe UI', system-ui, sans-serif`;
+    }
+
+    for (let i = 0; i < 12; i++) {
+      const angle = (i / 12) * Math.PI * 2 - Math.PI / 2;
+      const x = cx + Math.cos(angle) * numR;
+      const y = cy + Math.sin(angle) * numR;
+
+      if (isNeon) {
+        ctx.shadowColor = css('--accent');
+        ctx.shadowBlur  = fontSize * 0.6;
+      } else {
+        ctx.shadowColor = 'transparent';
+        ctx.shadowBlur  = 0;
+      }
+
+      ctx.fillText(numerals[i], x, y);
+    }
+    ctx.shadowColor = 'transparent';
+    ctx.shadowBlur  = 0;
+
+    // ─── Hands ───
+    const { hourAngle, minAngle, secAngle } = getTimeAngles();
+
+    function hand(angle, length, width, color, glow) {
+      const rad = (angle * Math.PI) / 180 - Math.PI / 2;
+      const len = R * length;
+      const x = cx + Math.cos(rad) * len;
+      const y = cy + Math.sin(rad) * len;
+
+      ctx.save();
+      if (glow) {
+        ctx.shadowColor = glow;
+        ctx.shadowBlur  = R * 0.06;
+      }
+      ctx.beginPath();
+      ctx.moveTo(cx, cy);
+      ctx.lineTo(x, y);
+      ctx.strokeStyle = color;
+      ctx.lineWidth   = Math.max(1.5, R * width);
+      ctx.lineCap     = 'round';
+      ctx.stroke();
+      ctx.restore();
+    }
+
+    // Hour hand (thick, shorter)
+    hand(hourAngle, 0.50, 0.055, css('--hour-hand'),
+         theme === 'neon' ? css('--accent') : (theme === 'dark' ? css('--glow-color') : null));
+
+    // Minute hand (medium)
+    hand(minAngle, 0.70, 0.038, css('--min-hand'),
+         theme === 'neon' ? css('--accent2') : (theme === 'dark' ? css('--glow-color') : null));
+
+    // Second hand (thin, longest) with smooth sweep
+    hand(secAngle, 0.78, 0.018, css('--sec-hand'),
+         theme === 'neon' ? '#fff' : (theme === 'dark' ? css('--glow-color') : null));
+
+    // Second hand tail
+    if (theme !== 'classic') {
+      const rad = (secAngle * Math.PI) / 180 - Math.PI / 2;
+      const tailLen = R * 0.13;
+      const tx = cx - Math.cos(rad) * tailLen;
+      const ty = cy - Math.sin(rad) * tailLen;
+      ctx.beginPath();
+      ctx.moveTo(cx, cy);
+      ctx.lineTo(tx, ty);
+      ctx.strokeStyle = css('--sec-hand');
+      ctx.globalAlpha = 0.35;
+      ctx.lineWidth = Math.max(1, R * 0.012);
+      ctx.lineCap = 'round';
+      ctx.stroke();
+      ctx.globalAlpha = 1;
+    }
+
+    // ─── Center dot ───
+    const dotR = Math.max(3, R * 0.035);
+    const grad = ctx.createRadialGradient(cx, cy, 0, cx, cy, dotR);
+    if (theme === 'neon') {
+      grad.addColorStop(0, '#fff');
+      grad.addColorStop(0.5, css('--center-dot'));
+      grad.addColorStop(1, css('--center-dot'));
+    } else {
+      grad.addColorStop(0, css('--center-dot'));
+      grad.addColorStop(1, css('--center-dot'));
+    }
+    ctx.beginPath();
+    ctx.arc(cx, cy, dotR, 0, Math.PI * 2);
+    ctx.fillStyle = grad;
+    if (theme === 'dark' || theme === 'neon') {
+      ctx.shadowColor = css('--glow-color');
+      ctx.shadowBlur  = dotR * 2;
+    }
+    ctx.fill();
+    ctx.shadowColor = 'transparent';
+    ctx.shadowBlur  = 0;
+
+    // Outer center ring
+    ctx.beginPath();
+    ctx.arc(cx, cy, dotR * 1.8, 0, Math.PI * 2);
+    ctx.strokeStyle = css('--center-dot');
+    ctx.globalAlpha = 0.3;
+    ctx.lineWidth = 0.8;
+    ctx.stroke();
+    ctx.globalAlpha = 1;
+  }
+
+  /* ── Update text info ── */
+  function updateInfo() {
+    const now = new Date();
+    const hh  = String(now.getHours()).padStart(2, '0');
+    const mm  = String(now.getMinutes()).padStart(2, '0');
+    const ss  = String(now.getSeconds()).padStart(2, '0');
+    digital.textContent = `${hh}:${mm}:${ss}`;
+    dateEl.textContent  = formatDate(now);
+  }
+
+  /* ── Animation loop ── */
+  function tick() {
+    drawClock();
+    updateInfo();
+    requestAnimationFrame(tick);
+  }
+
+  /* ── Theme switching ── */
+  function setTheme(theme) {
+    state.theme = theme;
+    body.setAttribute('data-theme', theme);
+    document.querySelectorAll('#themeBtns button').forEach(btn => {
+      btn.classList.toggle('active', btn.dataset.theme === theme);
+    });
+  }
+
+  function setNumerals(numerals) {
+    state.numerals = numerals;
+    body.setAttribute('data-numerals', numerals);
+    document.querySelectorAll('#numeralBtns button').forEach(btn => {
+      btn.classList.toggle('active', btn.dataset.numerals === numerals);
+    });
+  }
+
+  function toggleDateLang() {
+    state.dateLang = state.dateLang === 'english' ? 'odia' : 'english';
+    dateLangBtn.textContent = state.dateLang === 'english' ? 'English' : 'ଓଡ଼ିଆ';
+    dateLangBtn.classList.toggle('active', state.dateLang === 'odia');
+    updateInfo();
+  }
+
+  function toggleFullscreen() {
+    if (!document.fullscreenElement) {
+      document.documentElement.requestFullscreen().catch(() => {});
+    } else {
+      document.exitFullscreen().catch(() => {});
+    }
+  }
+
+  /* ── Resize observer ── */
+  const ro = new ResizeObserver(() => { resizeCanvas(); });
+  ro.observe(canvas.parentElement);
+
+  /* ── Event binding ── */
+  // Theme buttons
+  document.getElementById('themeBtns').addEventListener('click', e => {
+    const btn = e.target.closest('button');
+    if (!btn || !btn.dataset.theme) return;
+    setTheme(btn.dataset.theme);
+  });
+
+  // Numeral buttons
+  document.getElementById('numeralBtns').addEventListener('click', e => {
+    const btn = e.target.closest('button');
+    if (!btn || !btn.dataset.numerals) return;
+    setNumerals(btn.dataset.numerals);
+  });
+
+  // Date language toggle
+  dateLangBtn.addEventListener('click', toggleDateLang);
+
+  // Fullscreen
+  document.getElementById('fullscreenBtn').addEventListener('click', toggleFullscreen);
+
+  // Keyboard shortcuts
+  document.addEventListener('keydown', e => {
+    if (e.key === 'f' || e.key === 'F') toggleFullscreen();
+    if (e.key === 't' || e.key === 'T') {
+      const themes = ['dark', 'classic', 'neon'];
+      const idx = (themes.indexOf(state.theme) + 1) % themes.length;
+      setTheme(themes[idx]);
+    }
+    if (e.key === 'n' || e.key === 'N') {
+      const nums = ['standard', 'roman', 'odia'];
+      const idx = (nums.indexOf(state.numerals) + 1) % nums.length;
+      setNumerals(nums[idx]);
+    }
+    if (e.key === 'd' || e.key === 'D') toggleDateLang();
+  });
+
+  // Fullscreen change tracking
+  document.addEventListener('fullscreenchange', () => {
+    const btn = document.getElementById('fullscreenBtn');
+    if (document.fullscreenElement) {
+      btn.textContent = '⛶ Exit';
+    } else {
+      btn.textContent = '⛶ Fullscreen';
+    }
+  });
+
+  /* ── Boot ── */
+  function boot() {
+    resizeCanvas();
+    setTheme('dark');
+    setNumerals('standard');
+    dateLangBtn.textContent = 'English';
+    tick();
+  }
+
+  // Wait for first paint
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', boot);
+  } else {
+    boot();
+  }
+
+})();
+</script>
+</body>
+</html>
