@@ -11,7 +11,7 @@
 
 A **polished, fully self-contained analog clock** built in a single HTML file — zero dependencies, canvas-rendered, deployable on GitHub Pages.
 
-![Screenshot](https://raw.githubusercontent.com/nousresearch/hermes-agent/main/assets/analog-clock-preview.png)
+![Screenshot](https://raw.githubusercontent.com/soumendrak/analog-clock/main/docs/preview.png)
 
 ## ✨ Features
 
@@ -31,9 +31,7 @@ A **polished, fully self-contained analog clock** built in a single HTML file �
 
 ## 🚀 Live Demo
 
-[https://your-username.github.io/analog-clock/](https://your-username.github.io/analog-clock/)
-
-*(Replace with your actual URL after deploying)*
+[https://soumendrak.github.io/analog-clock/](https://soumendrak.github.io/analog-clock/)
 
 ## 🧩 Architecture
 
@@ -63,7 +61,7 @@ flowchart TD
 
 1. **Download** the file:
    ```bash
-   curl -O https://raw.githubusercontent.com/your-username/analog-clock/main/index.html
+   curl -O https://raw.githubusercontent.com/soumendrak/analog-clock/main/index.html
    ```
 2. **Open** in any modern browser:
    ```bash
