@@ -302,16 +302,18 @@
     <!-- Timezone -->
     <div class="control-group">
       <span class="control-label">TZ</span>
-      <select id="tzSelect" style="background:var(--btn-bg);color:var(--text);border:1px solid var(--surface2);border-radius:8px;padding:5px 8px;font-size:0.75rem;font-family:inherit;cursor:pointer;max-width:130px;">
+      <select id="tzSelect" style="background:var(--btn-bg);color:var(--text);border:1px solid var(--surface2);border-radius:8px;padding:5px 8px;font-size:0.75rem;font-family:inherit;cursor:pointer;max-width:155px;">
         <option value="-12">UTC-12 (Baker Island)</option>
         <option value="-11">UTC-11 (American Samoa)</option>
         <option value="-10">UTC-10 (Hawaii)</option>
+        <option value="-9.5">UTC-9:30 (Marquesas)</option>
         <option value="-9">UTC-9 (Alaska)</option>
         <option value="-8">UTC-8 (Los Angeles)</option>
         <option value="-7">UTC-7 (Denver)</option>
         <option value="-6">UTC-6 (Chicago)</option>
         <option value="-5">UTC-5 (New York)</option>
         <option value="-4">UTC-4 (Halifax)</option>
+        <option value="-3.5">UTC-3:30 (Newfoundland)</option>
         <option value="-3">UTC-3 (São Paulo)</option>
         <option value="-2">UTC-2 (Mid-Atlantic)</option>
         <option value="-1">UTC-1 (Azores)</option>
@@ -319,15 +321,24 @@
         <option value="1">UTC+1 (Paris/Berlin)</option>
         <option value="2">UTC+2 (Athens/Cairo)</option>
         <option value="3">UTC+3 (Moscow)</option>
+        <option value="3.5">UTC+3:30 (Iran)</option>
         <option value="4">UTC+4 (Dubai)</option>
+        <option value="4.5">UTC+4:30 (Afghanistan)</option>
         <option value="5">UTC+5 (Karachi)</option>
+        <option value="5.5">UTC+5:30 (India)</option>
+        <option value="5.75">UTC+5:45 (Nepal)</option>
         <option value="6">UTC+6 (Dhaka)</option>
+        <option value="6.5">UTC+6:30 (Myanmar)</option>
         <option value="7">UTC+7 (Bangkok)</option>
         <option value="8">UTC+8 (Beijing/Singapore)</option>
+        <option value="8.75">UTC+8:45 (Eucla)</option>
         <option value="9">UTC+9 (Tokyo/Seoul)</option>
+        <option value="9.5">UTC+9:30 (Adelaide)</option>
         <option value="10">UTC+10 (Sydney)</option>
+        <option value="10.5">UTC+10:30 (Lord Howe)</option>
         <option value="11">UTC+11 (Solomon Is.)</option>
         <option value="12">UTC+12 (Auckland)</option>
+        <option value="12.75">UTC+12:45 (Chatham)</option>
         <option value="13">UTC+13 (Samoa)</option>
         <option value="14">UTC+14 (Line Islands)</option>
       </select>
@@ -338,9 +349,19 @@
       <button class="toggle-btn" id="fullscreenBtn">⛶ Fullscreen</button>
     </div>
 
-  </div>
-</div>
-
+    <!-- Header with Logo -->
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;padding-bottom:10px;border-bottom:1px solid var(--surface2);">
+      <svg width="32" height="32" viewBox="0 0 100 100" style="flex-shrink:0;">
+        <circle cx="50" cy="50" r="45" fill="var(--surface)" stroke="var(--accent)" stroke-width="4"/>
+        <circle cx="50" cy="50" r="3" fill="var(--accent)"/>
+        <line x1="50" y1="50" x2="50" y2="25" stroke="var(--accent)" stroke-width="5" stroke-linecap="round"/>
+        <line x1="50" y1="50" x2="68" y2="50" stroke="var(--accent2)" stroke-width="3.5" stroke-linecap="round"/>
+        <line x1="50" y1="50" x2="50" y2="15" stroke="var(--accent)" stroke-width="1.5" stroke-linecap="round" opacity="0.7"/>
+        <circle cx="28" cy="22" r="8" fill="var(--accent)"/>
+        <text x="28" y="25" text-anchor="middle" fill="#fff" font-size="9" font-weight="bold" font-family="sans-serif">AP</text>
+      </svg>
+      <span style="font-size:1rem;font-weight:600;color:var(--text);">Analog Clock</span>
+    </div>
 <script>
 (function(){
   'use strict';
@@ -719,7 +740,7 @@
 
   // Timezone
   document.getElementById('tzSelect').addEventListener('change', function() {
-    tzOffset = parseInt(this.value);
+    tzOffset = parseFloat(this.value);
   });
 
   // Keyboard shortcuts
