@@ -299,6 +299,40 @@
       <button class="toggle-btn" id="dateLangBtn">English</button>
     </div>
 
+    <!-- Timezone -->
+    <div class="control-group">
+      <span class="control-label">TZ</span>
+      <select id="tzSelect" style="background:var(--btn-bg);color:var(--text);border:1px solid var(--surface2);border-radius:8px;padding:5px 8px;font-size:0.75rem;font-family:inherit;cursor:pointer;max-width:130px;">
+        <option value="-12">UTC-12 (Baker Island)</option>
+        <option value="-11">UTC-11 (American Samoa)</option>
+        <option value="-10">UTC-10 (Hawaii)</option>
+        <option value="-9">UTC-9 (Alaska)</option>
+        <option value="-8">UTC-8 (Los Angeles)</option>
+        <option value="-7">UTC-7 (Denver)</option>
+        <option value="-6">UTC-6 (Chicago)</option>
+        <option value="-5">UTC-5 (New York)</option>
+        <option value="-4">UTC-4 (Halifax)</option>
+        <option value="-3">UTC-3 (São Paulo)</option>
+        <option value="-2">UTC-2 (Mid-Atlantic)</option>
+        <option value="-1">UTC-1 (Azores)</option>
+        <option value="0" selected>UTC±0 (London)</option>
+        <option value="1">UTC+1 (Paris/Berlin)</option>
+        <option value="2">UTC+2 (Athens/Cairo)</option>
+        <option value="3">UTC+3 (Moscow)</option>
+        <option value="4">UTC+4 (Dubai)</option>
+        <option value="5">UTC+5 (Karachi)</option>
+        <option value="6">UTC+6 (Dhaka)</option>
+        <option value="7">UTC+7 (Bangkok)</option>
+        <option value="8">UTC+8 (Beijing/Singapore)</option>
+        <option value="9">UTC+9 (Tokyo/Seoul)</option>
+        <option value="10">UTC+10 (Sydney)</option>
+        <option value="11">UTC+11 (Solomon Is.)</option>
+        <option value="12">UTC+12 (Auckland)</option>
+        <option value="13">UTC+13 (Samoa)</option>
+        <option value="14">UTC+14 (Line Islands)</option>
+      </select>
+    </div>
+
     <!-- Fullscreen -->
     <div class="control-group">
       <button class="toggle-btn" id="fullscreenBtn">⛶ Fullscreen</button>
@@ -374,9 +408,17 @@
     return `${EN_DAYS[dow]}, ${d} ${EN_MONTHS[m]} ${y}`;
   }
 
-  /* ── Time helpers ── */
-  function getTimeAngles() {
+  // ── Time helpers ──
+  let tzOffset = 0; // UTC offset in hours
+
+  function getTimeInTimezone() {
     const now = new Date();
+    const utcMs = now.getTime() + now.getTimezoneOffset() * 60000;
+    return new Date(utcMs + tzOffset * 3600000);
+  }
+
+  function getTimeAngles() {
+    const now = getTimeInTimezone();
     const ms = now.getMilliseconds();
     const s  = now.getSeconds();
     const m  = now.getMinutes();
@@ -603,7 +645,7 @@
 
   /* ── Update text info ── */
   function updateInfo() {
-    const now = new Date();
+    const now = getTimeInTimezone();
     const hh  = String(now.getHours()).padStart(2, '0');
     const mm  = String(now.getMinutes()).padStart(2, '0');
     const ss  = String(now.getSeconds()).padStart(2, '0');
@@ -674,6 +716,11 @@
 
   // Fullscreen
   document.getElementById('fullscreenBtn').addEventListener('click', toggleFullscreen);
+
+  // Timezone
+  document.getElementById('tzSelect').addEventListener('change', function() {
+    tzOffset = parseInt(this.value);
+  });
 
   // Keyboard shortcuts
   document.addEventListener('keydown', e => {
